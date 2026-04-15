@@ -43,10 +43,10 @@ User0  User1  User2  User3  Delete  _  _  _  _  _
 [behavior.combo]
 combos = [
   { actions = ["O", "P"], output = "Backspace" },
-  { actions = ["F", "V"], output = "Space" },
-  { actions = ["J", "M"], output = "Space" },
+  { actions = ["MT(F,LGui)", "V"], output = "Space" },
+  { actions = ["MT(J,RCtrl)", "M"], output = "Space" },
   { actions = ["Q", "W"], output = "Escape" },
-  { actions = ["A", "S"], output = "Tab" },
+  { actions = ["MT(A,LShift)", "MT(S,LAlt)"], output = "Tab" },
   { actions = ["Z", "X"], output = "LGui" },
 ]
 
