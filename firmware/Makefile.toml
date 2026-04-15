@@ -1,0 +1,21 @@
+[config]
+skip_core_tasks = true
+
+[env]
+LIBCLANG_PATH = "/home/linuxbrew/.linuxbrew/lib"
+
+[tasks.default]
+dependencies = ["uf2"]
+
+[tasks.uf2]
+dependencies = ["objcopy"]
+command = "cargo"
+args = ["hex-to-uf2", "--input-path", "wakizashi.hex", "--output-path", "wakizashi.uf2", "--family", "nrf52840"]
+
+[tasks.objcopy]
+command = "cargo"
+args = ["objcopy", "--release", "--", "-O", "ihex", "wakizashi.hex"]
+
+[tasks.flash-nuke]
+command = "python3"
+args = ["gen_flash_nuke.py"]
