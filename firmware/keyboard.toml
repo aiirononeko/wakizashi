@@ -9,6 +9,7 @@ usb_enable = true
 
 [rmk]
 ble_profiles_num = 4
+combo_max_num = 16
 
 [matrix]
 row_pins = ["P0_02", "P0_03", "P0_28"]
@@ -49,6 +50,8 @@ combos = [
   { actions = ["MT(A,LShift)", "MT(S,LAlt)"], output = "Tab" },
   { actions = ["Z", "X"], output = "LGui" },
   { actions = ["MT(L,RShift)", "Semicolon"], output = "Enter" },
+  { actions = ["MT(F,LGui)", "MT(D,LCtrl)"], output = "Language2" },
+  { actions = ["MT(J,RCtrl)", "MT(K,RAlt)"], output = "Language1" },
 ]
 
 [behavior.morse]
