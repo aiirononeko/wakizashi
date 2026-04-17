@@ -28,16 +28,16 @@ matrix_map = """
 name = "base"
 keys = """
 Q  W  E  R  T  Y  U  I  O  P
-MT(A,LShift)  MT(S,LAlt)  MT(D,LCtrl)  MT(F,LGui)  G  MT(H,RGui)  MT(J,RCtrl)  MT(K,RAlt)  MT(L,RShift)  Enter
-Z  X  C  V  B  N  M  Comma  Dot  MO(1)
+MT(A,LShift)  MT(S,LAlt)  MT(D,LCtrl)  MT(F,LGui)  G  MT(H,RGui)  MT(J,RCtrl)  MT(K,RAlt)  MT(L,RShift)  Semicolon
+Z  X  C  V  B  N  M  Comma  Dot  LT(1,Quote)
 """
 
 [[layer]]
 name = "lower"
 keys = """
-Kc1  Kc2  Kc3  Kc4  Kc5  Kc6  Kc7  Kc8  Kc9  Kc0
-_  _  _  _  _  Left  Down  Up  Right  _
-User0  User1  User2  User3  Delete  _  _  _  _  _
+Kc0  Kc1  Kc2  Kc3  _  Minus  _  Up  _  _
+Equal  Kc4  Kc5  Kc6  _  SHIFTED(Equal)  Left  Down  Right  _
+_  Kc7  Kc8  Kc9  Delete  SHIFTED(Kc8)  Slash  LeftBracket  RightBracket  _
 """
 
 [behavior.combo]
@@ -48,6 +48,7 @@ combos = [
   { actions = ["Q", "W"], output = "Escape" },
   { actions = ["MT(A,LShift)", "MT(S,LAlt)"], output = "Tab" },
   { actions = ["Z", "X"], output = "LGui" },
+  { actions = ["MT(L,RShift)", "Semicolon"], output = "Enter" },
 ]
 
 [behavior.morse]
