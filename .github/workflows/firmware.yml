@@ -46,7 +46,7 @@ jobs:
             ~/.cargo/git/db
             ~/.cargo/bin
             firmware/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('firmware/Cargo.lock', 'firmware/rust-toolchain.toml') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('firmware/Cargo.lock', 'firmware/rust-toolchain.toml', '.github/workflows/firmware.yml') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 
