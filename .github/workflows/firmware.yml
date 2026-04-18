@@ -1,0 +1,78 @@
+name: Build firmware
+
+on:
+  push:
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/firmware.yml'
+  pull_request:
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/firmware.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build uf2
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    defaults:
+      run:
+        working-directory: firmware
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rust-src,rustfmt,llvm-tools
+          targets: thumbv7em-none-eabihf
+
+      - name: Install libclang (for bindgen in nrf-sdc-sys)
+        working-directory: .
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libclang-dev
+
+      - name: Cache cargo registry, installed binaries and build target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            ~/.cargo/bin
+            firmware/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('firmware/Cargo.lock', 'firmware/rust-toolchain.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install cargo build tools
+        run: |
+          command -v cargo-objcopy    >/dev/null || cargo install --locked cargo-binutils
+          command -v cargo-hex-to-uf2 >/dev/null || cargo install --locked cargo-hex-to-uf2
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Convert ELF to Intel HEX
+        run: cargo objcopy --release -- -O ihex wakizashi.hex
+
+      - name: Convert HEX to UF2
+        run: cargo hex-to-uf2 --input-path wakizashi.hex --output-path wakizashi.uf2 --family nrf52840
+
+      - name: Show artifact sizes
+        run: ls -la wakizashi.uf2 wakizashi.hex
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wakizashi-firmware
+          path: |
+            firmware/wakizashi.uf2
+            firmware/wakizashi.hex
+          if-no-files-found: error
+          retention-days: 30
