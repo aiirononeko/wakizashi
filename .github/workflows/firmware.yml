@@ -75,4 +75,4 @@ jobs:
             firmware/wakizashi.uf2
             firmware/wakizashi.hex
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90
