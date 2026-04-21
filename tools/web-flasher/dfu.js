@@ -174,17 +174,35 @@ class SerialIO {
   }
 }
 
-async function sendPacket(io, packet, ackTimeoutMs = 2000) {
-  await io.write(packet);
+async function writeWithTimeout(io, bytes, timeoutMs) {
+  const writePromise = io.write(bytes);
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`write() stalled after ${timeoutMs}ms — port may not be the bootloader, or DTR/flow control is blocking`)), timeoutMs),
+  );
+  await Promise.race([writePromise, timeoutPromise]);
+}
+
+async function sendPacket(io, packet, ackTimeoutMs = 2000, log) {
+  log?.(`TX ${packet.length}B: ${hexPreview(packet, 32)}`);
+  await writeWithTimeout(io, packet, 3000);
+  log?.('TX complete, waiting for ACK');
   // Drain one ACK frame. We don't verify the ACK sequence number; adafruit-nrfutil
   // doesn't either in practice (the retry path is effectively disabled upstream).
   try {
-    await io.nextFrame(ackTimeoutMs);
+    const frame = await io.nextFrame(ackTimeoutMs);
+    log?.(`RX ACK ${frame.length}B: ${hexPreview(frame, 16)}`);
   } catch (e) {
     // The final STOP packet races with the bootloader's activation reset, so a
     // timeout there is expected. Let callers decide how to react.
     throw e;
   }
+}
+
+function hexPreview(bytes, max) {
+  const n = Math.min(bytes.length, max);
+  const parts = [];
+  for (let i = 0; i < n; i++) parts.push(bytes[i].toString(16).padStart(2, '0'));
+  return parts.join(' ') + (bytes.length > n ? ` … (+${bytes.length - n}B)` : '');
 }
 
 function startPacketFrame(mode, sdSize, blSize, appSize) {
@@ -218,7 +236,13 @@ function erasePagesFor(appSize) {
 export async function flash(port, { firmware, initPacket, onProgress, onLog }) {
   const log = (msg) => onLog?.(msg);
   resetSequenceNumber();
+  const info = port.getInfo?.() ?? {};
+  if (info.usbVendorId || info.usbProductId) {
+    log(`選択ポート: USB VID=0x${(info.usbVendorId ?? 0).toString(16)} PID=0x${(info.usbProductId ?? 0).toString(16)}`);
+  }
+  log(`ポートを ${DEFAULT_BAUD_RATE} bps で open`);
   await port.open({ baudRate: DEFAULT_BAUD_RATE });
+  log('ポート open 完了');
   // Match adafruit-nrfutil's open(): toggle DTR to reset the bootloader's DFU
   // state machine before we start talking, then let it boot back up. Without
   // this the bootloader often ignores the first START_DFU.
@@ -226,6 +250,7 @@ export async function flash(port, { firmware, initPacket, onProgress, onLog }) {
     await port.setSignals({ dataTerminalReady: false });
     await sleep(50);
     await port.setSignals({ dataTerminalReady: true });
+    log('DTR トグル完了');
   } catch (e) {
     log(`DTR 制御に失敗 (継続): ${e instanceof Error ? e.message : e}`);
   }
@@ -243,6 +268,7 @@ export async function flash(port, { firmware, initPacket, onProgress, onLog }) {
       io,
       buildHciPacket(startPacketFrame(DFU_UPDATE_MODE_APP, 0, 0, firmware.length)),
       8000,
+      log,
     );
     const erasePages = erasePagesFor(firmware.length);
     const eraseWaitMs = Math.max(500, erasePages * FLASH_PAGE_ERASE_TIME_MS);
