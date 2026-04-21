@@ -94,13 +94,15 @@ class FrameAccumulator {
 // Wraps a WritableStream + ReadableStream pair. Reader is kept open for the
 // lifetime of the transport so we can consume ACKs in order.
 class SerialIO {
-  constructor(port) {
+  constructor(port, log) {
     this.port = port;
+    this.log = log ?? (() => {});
     this.writer = port.writable.getWriter();
     this.reader = port.readable.getReader();
     this.accumulator = new FrameAccumulator();
     this.pendingFrames = [];
     this.pendingResolvers = [];
+    this.totalRx = 0;
     this.readLoop();
   }
   async readLoop() {
@@ -109,10 +111,12 @@ class SerialIO {
         const { value, done } = await this.reader.read();
         if (done) break;
         if (!value || value.length === 0) continue;
+        this.totalRx += value.length;
+        this.log(`RX ${value.length}B: ${hexPreview(value, 32)}`);
         const frames = this.accumulator.push(value);
         for (const f of frames) {
           const resolver = this.pendingResolvers.shift();
-          if (resolver) resolver(f);
+          if (resolver) resolver.resolve(f);
           else this.pendingFrames.push(f);
         }
       }
@@ -255,7 +259,7 @@ export async function flash(port, { firmware, initPacket, onProgress, onLog }) {
     log(`DTR 制御に失敗 (継続): ${e instanceof Error ? e.message : e}`);
   }
   await sleep(200);
-  const io = new SerialIO(port);
+  const io = new SerialIO(port, log);
   // Drain any banner/junk the bootloader may have emitted between reset and
   // our first write so it does not get parsed as an ACK for START_DFU.
   const drained = await io.drain(150);
