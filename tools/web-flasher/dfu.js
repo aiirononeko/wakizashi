@@ -144,6 +144,20 @@ class SerialIO {
       }
     });
   }
+  // Swallow any RX bytes arriving within `ms`, used to clear bootloader banners
+  // / boot-time junk before we start the handshake. After waiting we also
+  // reset the frame accumulator so stray 0xC0 bytes don't leave it in the
+  // middle of an imaginary frame.
+  async drain(ms) {
+    const start = Date.now();
+    while (Date.now() - start < ms) {
+      await sleep(20);
+    }
+    const count = this.pendingFrames.reduce((s, f) => s + f.length + 2, 0);
+    this.pendingFrames = [];
+    this.accumulator = new FrameAccumulator();
+    return count;
+  }
   async close() {
     try {
       await this.writer.close();
@@ -205,15 +219,30 @@ export async function flash(port, { firmware, initPacket, onProgress, onLog }) {
   const log = (msg) => onLog?.(msg);
   resetSequenceNumber();
   await port.open({ baudRate: DEFAULT_BAUD_RATE });
-  const io = new SerialIO(port);
+  // Match adafruit-nrfutil's open(): toggle DTR to reset the bootloader's DFU
+  // state machine before we start talking, then let it boot back up. Without
+  // this the bootloader often ignores the first START_DFU.
   try {
-    // Small settle delay after the port opens, mirrors the Python client.
-    await sleep(100);
+    await port.setSignals({ dataTerminalReady: false });
+    await sleep(50);
+    await port.setSignals({ dataTerminalReady: true });
+  } catch (e) {
+    log(`DTR 制御に失敗 (継続): ${e instanceof Error ? e.message : e}`);
+  }
+  await sleep(200);
+  const io = new SerialIO(port);
+  // Drain any banner/junk the bootloader may have emitted between reset and
+  // our first write so it does not get parsed as an ACK for START_DFU.
+  const drained = await io.drain(150);
+  if (drained) log(`初期受信 ${drained} bytes を破棄`);
 
+  try {
     log('送信: START_DFU');
+    // START_DFU triggers a flash erase whose ACK can lag; give it extra slack.
     await sendPacket(
       io,
       buildHciPacket(startPacketFrame(DFU_UPDATE_MODE_APP, 0, 0, firmware.length)),
+      8000,
     );
     const erasePages = erasePagesFor(firmware.length);
     const eraseWaitMs = Math.max(500, erasePages * FLASH_PAGE_ERASE_TIME_MS);
