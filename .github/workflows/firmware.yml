@@ -2,14 +2,18 @@ name: Build firmware
 
 on:
   push:
-    paths:
-      - 'firmware/**'
-      - '.github/workflows/firmware.yml'
+    branches:
+      - '**'
+    tags:
+      - 'v*'
   pull_request:
     paths:
       - 'firmware/**'
       - '.github/workflows/firmware.yml'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -69,8 +73,26 @@ jobs:
       - name: Convert HEX to UF2
         run: cargo hex-to-uf2 --input-path wakizashi.hex --output-path wakizashi.uf2 --family nrf52840
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install adafruit-nrfutil
+        run: pip install --upgrade adafruit-nrfutil
+
+      # Generate DFU zip package for serial DFU flashing via the Adafruit UF2
+      # bootloader. This package is consumed by the web flasher (tools/web-flasher)
+      # as well as the `adafruit-nrfutil dfu serial` CLI.
+      - name: Generate DFU zip package
+        run: |
+          adafruit-nrfutil dfu genpkg \
+            --dev-type 0x0052 \
+            --application wakizashi.hex \
+            wakizashi-dfu.zip
+
       - name: Show artifact sizes
-        run: ls -la wakizashi.uf2 wakizashi.hex
+        run: ls -la wakizashi.uf2 wakizashi.hex wakizashi-dfu.zip
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
@@ -79,5 +101,17 @@ jobs:
           path: |
             firmware/wakizashi.uf2
             firmware/wakizashi.hex
+            firmware/wakizashi-dfu.zip
           if-no-files-found: error
           retention-days: 90
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            firmware/wakizashi.uf2
+            firmware/wakizashi.hex
+            firmware/wakizashi-dfu.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true
