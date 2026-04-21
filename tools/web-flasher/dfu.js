@@ -94,9 +94,8 @@ class FrameAccumulator {
 // Wraps a WritableStream + ReadableStream pair. Reader is kept open for the
 // lifetime of the transport so we can consume ACKs in order.
 class SerialIO {
-  constructor(port, log) {
+  constructor(port) {
     this.port = port;
-    this.log = log ?? (() => {});
     this.writer = port.writable.getWriter();
     this.reader = port.readable.getReader();
     this.accumulator = new FrameAccumulator();
@@ -112,7 +111,7 @@ class SerialIO {
         if (done) break;
         if (!value || value.length === 0) continue;
         this.totalRx += value.length;
-        this.log(`RX ${value.length}B: ${hexPreview(value, 32)}`);
+        console.debug('[dfu] RX', value.length, 'B:', hexPreview(value, 32));
         const frames = this.accumulator.push(value);
         for (const f of frames) {
           const resolver = this.pendingResolvers.shift();
@@ -186,20 +185,13 @@ async function writeWithTimeout(io, bytes, timeoutMs) {
   await Promise.race([writePromise, timeoutPromise]);
 }
 
-async function sendPacket(io, packet, ackTimeoutMs = 2000, log) {
-  log?.(`TX ${packet.length}B: ${hexPreview(packet, 32)}`);
+async function sendPacket(io, packet, ackTimeoutMs = 2000) {
+  console.debug('[dfu] TX', packet.length, 'B:', hexPreview(packet, 32));
   await writeWithTimeout(io, packet, 3000);
-  log?.('TX complete, waiting for ACK');
   // Drain one ACK frame. We don't verify the ACK sequence number; adafruit-nrfutil
   // doesn't either in practice (the retry path is effectively disabled upstream).
-  try {
-    const frame = await io.nextFrame(ackTimeoutMs);
-    log?.(`RX ACK ${frame.length}B: ${hexPreview(frame, 16)}`);
-  } catch (e) {
-    // The final STOP packet races with the bootloader's activation reset, so a
-    // timeout there is expected. Let callers decide how to react.
-    throw e;
-  }
+  const frame = await io.nextFrame(ackTimeoutMs);
+  console.debug('[dfu] ACK', frame.length, 'B:', hexPreview(frame, 16));
 }
 
 function hexPreview(bytes, max) {
@@ -259,7 +251,7 @@ export async function flash(port, { firmware, initPacket, onProgress, onLog }) {
     log(`DTR 制御に失敗 (継続): ${e instanceof Error ? e.message : e}`);
   }
   await sleep(200);
-  const io = new SerialIO(port, log);
+  const io = new SerialIO(port);
   // Drain any banner/junk the bootloader may have emitted between reset and
   // our first write so it does not get parsed as an ACK for START_DFU.
   const drained = await io.drain(150);
@@ -272,7 +264,6 @@ export async function flash(port, { firmware, initPacket, onProgress, onLog }) {
       io,
       buildHciPacket(startPacketFrame(DFU_UPDATE_MODE_APP, 0, 0, firmware.length)),
       8000,
-      log,
     );
     const erasePages = erasePagesFor(firmware.length);
     const eraseWaitMs = Math.max(500, erasePages * FLASH_PAGE_ERASE_TIME_MS);
