@@ -103,7 +103,12 @@ async function loadFirmwareFromRelease(tag) {
       throw new Error(`${release.tag_name}: ${DFU_ASSET_NAME} が見つかりません`);
     }
     log(`${release.tag_name}: ${asset.name} (${Math.round(asset.size / 1024)} KB) をダウンロード`);
-    const dl = await fetch(asset.browser_download_url);
+    // Use the API asset endpoint with Accept: application/octet-stream so CORS
+    // works reliably. `browser_download_url` redirects to
+    // objects.githubusercontent.com which has historically been flaky under CORS.
+    const dl = await fetch(asset.url, {
+      headers: { Accept: 'application/octet-stream' },
+    });
     if (!dl.ok) throw new Error(`download failed: ${dl.status}`);
     firmwareBlob = await dl.blob();
     firmwareLabel = release.tag_name;
