@@ -81,6 +81,13 @@ async function fetchRelease(tag) {
     ? `https://api.github.com/repos/${REPO}/releases/tags/${encodeURIComponent(tag)}`
     : `https://api.github.com/repos/${REPO}/releases/latest`;
   const res = await fetch(url, { headers: { Accept: 'application/vnd.github+json' } });
+  if (res.status === 404) {
+    throw new Error(
+      tag
+        ? `タグ "${tag}" の Release が見つかりません`
+        : `${REPO} に Release がまだありません。 \`git tag v0.1.0 && git push origin v0.1.0\` で初回リリースを作成してください`,
+    );
+  }
   if (!res.ok) {
     throw new Error(`GitHub API ${res.status}: ${await res.text().catch(() => res.statusText)}`);
   }
