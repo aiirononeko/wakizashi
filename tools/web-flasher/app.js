@@ -1,9 +1,11 @@
 import { requestVialDevice, isUnlocked, jumpToBootloader } from './hid.js';
 import { flash, parseDfuPackage } from './dfu.js';
 
-// GitHub repo that hosts firmware releases.
-const REPO = 'aiirononeko/wakizashi';
-const DFU_ASSET_NAME = 'wakizashi-dfu.zip';
+// Firmware is bundled into the Pages deploy (see .github/workflows/pages.yml)
+// so we can fetch it same-origin and avoid the CORS restrictions on GitHub's
+// release-assets CDN.
+const BUNDLED_ZIP_URL = './firmware/wakizashi-dfu.zip';
+const BUNDLED_VERSION_URL = './firmware/version.json';
 
 // Known VID/PIDs for serial bootloader enumeration hints (user still picks via dialog).
 const BOOTLOADER_HINTS = [
@@ -19,8 +21,6 @@ const $ = (sel) => document.querySelector(sel);
 
 const ui = {
   btnFetch: $('#btn-fetch'),
-  btnFetchTag: $('#btn-fetch-tag'),
-  tagInput: $('#tag-input'),
   fileInput: $('#file-input'),
   fetchStatus: $('#fetch-status'),
   btnReset: $('#btn-reset'),
@@ -73,49 +73,31 @@ function checkCompat() {
 }
 
 // ---------------------------------------------------------------------------
-// Phase 1: Fetch firmware from GitHub Releases
+// Phase 1: Fetch bundled firmware
 // ---------------------------------------------------------------------------
 
-async function fetchRelease(tag) {
-  const url = tag
-    ? `https://api.github.com/repos/${REPO}/releases/tags/${encodeURIComponent(tag)}`
-    : `https://api.github.com/repos/${REPO}/releases/latest`;
-  const res = await fetch(url, { headers: { Accept: 'application/vnd.github+json' } });
-  if (res.status === 404) {
-    throw new Error(
-      tag
-        ? `タグ "${tag}" の Release が見つかりません`
-        : `${REPO} に Release がまだありません。 \`git tag v0.1.0 && git push origin v0.1.0\` で初回リリースを作成してください`,
-    );
-  }
-  if (!res.ok) {
-    throw new Error(`GitHub API ${res.status}: ${await res.text().catch(() => res.statusText)}`);
-  }
-  return res.json();
-}
-
-async function loadFirmwareFromRelease(tag) {
+async function loadBundledFirmware() {
   setStatus(ui.fetchStatus, '取得中…');
   try {
-    const release = await fetchRelease(tag);
-    const asset = release.assets?.find((a) => a.name === DFU_ASSET_NAME);
-    if (!asset) {
-      throw new Error(`${release.tag_name}: ${DFU_ASSET_NAME} が見つかりません`);
+    const versionRes = await fetch(BUNDLED_VERSION_URL, { cache: 'no-store' });
+    if (!versionRes.ok) {
+      throw new Error(`version.json の取得に失敗: ${versionRes.status}`);
     }
-    log(`${release.tag_name}: ${asset.name} (${Math.round(asset.size / 1024)} KB) をダウンロード`);
-    // Use the API asset endpoint with Accept: application/octet-stream so CORS
-    // works reliably. `browser_download_url` redirects to
-    // objects.githubusercontent.com which has historically been flaky under CORS.
-    const dl = await fetch(asset.url, {
-      headers: { Accept: 'application/octet-stream' },
-    });
-    if (!dl.ok) throw new Error(`download failed: ${dl.status}`);
-    firmwareBlob = await dl.blob();
-    firmwareLabel = release.tag_name;
-    // Pre-parse to fail fast on a broken package.
+    const version = await versionRes.json();
+    if (!version.tag) {
+      throw new Error('まだ Release がありません。リポジトリで `git tag v0.1.0 && git push origin v0.1.0` を実行して初回リリースを作成してください');
+    }
+
+    const zipRes = await fetch(BUNDLED_ZIP_URL, { cache: 'no-store' });
+    if (!zipRes.ok) {
+      throw new Error(`DFU zip の取得に失敗: ${zipRes.status}`);
+    }
+    firmwareBlob = await zipRes.blob();
+    firmwareLabel = version.tag;
+    log(`${version.tag}: wakizashi-dfu.zip (${Math.round(firmwareBlob.size / 1024)} KB) を取得`);
     const { firmware, initPacket } = await parseDfuPackage(firmwareBlob);
     log(`DFU パッケージ OK: firmware=${firmware.length}B, init=${initPacket.length}B`);
-    setStatus(ui.fetchStatus, `${release.tag_name} を取得`, 'ok');
+    setStatus(ui.fetchStatus, `${version.tag} を取得`, 'ok');
   } catch (e) {
     firmwareBlob = null;
     firmwareLabel = '';
@@ -204,11 +186,7 @@ async function flashFirmware() {
 
 checkCompat();
 
-ui.btnFetch.addEventListener('click', () => loadFirmwareFromRelease());
-ui.btnFetchTag.addEventListener('click', () => {
-  const tag = ui.tagInput.value.trim();
-  if (tag) loadFirmwareFromRelease(tag);
-});
+ui.btnFetch.addEventListener('click', () => loadBundledFirmware());
 ui.fileInput.addEventListener('change', (e) => {
   const file = /** @type {HTMLInputElement} */ (e.target).files?.[0];
   if (file) loadFirmwareFromFile(file);

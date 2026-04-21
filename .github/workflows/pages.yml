@@ -7,6 +7,9 @@ on:
     paths:
       - 'tools/web-flasher/**'
       - '.github/workflows/pages.yml'
+  # Release が公開されたら最新ファームウェアを取り込み直してデプロイする。
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -27,6 +30,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # GitHub Release からの直接ダウンロードは release-assets.githubusercontent.com
+      # に CORS ヘッダが無いためブラウザからは失敗する。代わりに最新 Release の
+      # アセットを Pages 成果物へ同梱し、same-origin で fetch できるようにする。
+      - name: Bundle latest firmware into Pages artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          mkdir -p tools/web-flasher/firmware
+          tag="$(gh release list --repo "$GITHUB_REPOSITORY" --limit 1 --json tagName --jq '.[0].tagName' || true)"
+          if [ -n "${tag:-}" ]; then
+            echo "Bundling firmware from release: $tag"
+            gh release download "$tag" \
+              --repo "$GITHUB_REPOSITORY" \
+              --pattern 'wakizashi-dfu.zip' \
+              --dir tools/web-flasher/firmware
+            published_at="$(gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json publishedAt --jq '.publishedAt')"
+            size="$(stat -c '%s' tools/web-flasher/firmware/wakizashi-dfu.zip)"
+            cat > tools/web-flasher/firmware/version.json <<JSON
+          { "tag": "$tag", "publishedAt": "$published_at", "size": $size }
+          JSON
+          else
+            echo "No releases yet; deploying without bundled firmware."
+            echo '{ "tag": null }' > tools/web-flasher/firmware/version.json
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
