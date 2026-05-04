@@ -1,1 +1,5 @@
 *:Zone.Identifier
+
+/firmware/target/
+/firmware/*.hex
+/firmware/*.uf2
