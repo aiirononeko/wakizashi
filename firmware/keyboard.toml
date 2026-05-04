@@ -1,5 +1,5 @@
 [keyboard]
-name = "Wakizashi"
+name = "Wakizashi revB"
 product_name = "Wakizashi"
 vendor_id = 0x4149
 product_id = 0x574B
@@ -12,52 +12,59 @@ ble_profiles_num = 4
 combo_max_num = 16
 
 [matrix]
-row_pins = ["P0_02", "P0_03", "P0_28"]
-col_pins = ["P0_29", "P0_04", "P0_05", "P1_11", "P1_12", "P1_13", "P1_14", "P1_15", "P0_09", "P0_10"]
+row_pins = ["P0_02", "P0_03", "P0_28", "P0_29", "P0_04", "P0_05"]
+col_pins = ["P1_11", "P1_12", "P1_13", "P1_14", "P0_09", "P0_10"]
 
 [layout]
-rows = 3
-cols = 10
-layers = 2
+rows = 6
+cols = 6
+layers = 3
 matrix_map = """
-(0,0) (0,1) (0,2) (0,3) (0,4) (0,5) (0,6) (0,7) (0,8) (0,9)
-(1,0) (1,1) (1,2) (1,3) (1,4) (1,5) (1,6) (1,7) (1,8) (1,9)
-(2,0) (2,1) (2,2) (2,3) (2,4) (2,5) (2,6) (2,7) (2,8) (2,9)
+(0,0) (0,1) (0,2) (0,3) (0,4) (0,5) (1,0) (1,1) (1,2) (1,3) (1,4) (1,5)
+(2,0) (2,1) (2,2) (2,3) (2,4) (2,5) (3,0) (3,1) (3,2) (3,3) (3,4) (3,5)
+(4,0) (4,1) (4,2) (4,3) (4,4) (4,5) (5,0) (5,1) (5,2) (5,3) (5,4) (5,5)
 """
 
 [[layer]]
 name = "base"
 keys = """
-Q  W  E  R  T  Y  U  I  O  P
-MT(A,LShift)  MT(S,LAlt)  MT(D,LCtrl)  MT(F,LGui)  G  MT(H,RGui)  MT(J,RCtrl)  MT(K,RAlt)  MT(L,RShift)  Semicolon
-Z  X  C  V  B  N  M  Comma  Dot  LT(1,Quote)
+Tab     Q  W  E  R  T  Y  U  I  O  P          Backspace
+LCtrl   A  S  D  F  G  H  J  K  L  Semicolon  Enter
+LShift  Z  X  C  V  B  N  M  Comma  Dot  MO(1)  MO(2)
 """
 
 [[layer]]
 name = "lower"
 keys = """
-Kc0  Kc1  Kc2  Kc3  _  Minus  _  Up  _  _
-Equal  Kc4  Kc5  Kc6  _  SHIFTED(Equal)  Left  Down  Right  _
-_  Kc7  Kc8  Kc9  Delete  SHIFTED(Kc8)  Slash  LeftBracket  RightBracket  _
+_  Kc1  Kc2  Kc3  Kc4  Kc5  Kc6   Kc7   Kc8  Kc9    Kc0     Minus
+_  _    _    _    _    _    Left  Down  Up   Right  Delete  _
+_  _    _    _    _    _    _     _     _    _      _       _
+"""
+
+[[layer]]
+name = "raise"
+keys = """
+_  _  _     _     _  _  _  _  _     _       _  _
+_  _  LAlt  LGui  _  _  _  _  RAlt  RShift  _  _
+_  _  _     _     _  _  _  _  _     _       _  _
 """
 
 [behavior.combo]
 combos = [
-  { actions = ["O", "P"], output = "Backspace" },
-  { actions = ["MT(F,LGui)", "V"], output = "Space" },
-  { actions = ["MT(J,RCtrl)", "M"], output = "Space" },
+  { actions = ["F", "V"], output = "Space" },
+  { actions = ["J", "M"], output = "Space" },
   { actions = ["Q", "W"], output = "Escape" },
-  { actions = ["MT(A,LShift)", "MT(S,LAlt)"], output = "Tab" },
   { actions = ["Z", "X"], output = "LGui" },
-  { actions = ["MT(L,RShift)", "Semicolon"], output = "Enter" },
-  { actions = ["MT(F,LGui)", "MT(D,LCtrl)"], output = "Language2" },
-  { actions = ["MT(J,RCtrl)", "MT(K,RAlt)"], output = "Language1" },
+  { actions = ["F", "D"], output = "Language2" },
+  { actions = ["J", "K"], output = "Language1" },
 ]
-
-[behavior.morse]
-hold_timeout = "250ms"
 
 [ble]
 enabled = true
+# revB のハード分圧 (R2=2.2MΩ + R3=1MΩ → 比 1:3.2)
+# RMK BatteryProcessor は v_bat = val * total / measured / 1137.8 で逆算する
+battery_adc_pin = "P0_31"
+adc_divider_measured = 10
+adc_divider_total = 32
 
 [storage]
