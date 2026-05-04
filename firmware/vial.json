@@ -3,6 +3,48 @@
     "vendorId": "0x4149",
     "productId": "0x574B",
     "lighting": "none",
+    "customKeycodes": [
+        {
+            "name": "BT1",
+            "title": "Switch to Bluetooth profile 1",
+            "shortName": "BT1"
+        },
+        {
+            "name": "BT2",
+            "title": "Switch to Bluetooth profile 2",
+            "shortName": "BT2"
+        },
+        {
+            "name": "BT3",
+            "title": "Switch to Bluetooth profile 3",
+            "shortName": "BT3"
+        },
+        {
+            "name": "BT4",
+            "title": "Switch to Bluetooth profile 4",
+            "shortName": "BT4"
+        },
+        {
+            "name": "BT Next",
+            "title": "Switch to next Bluetooth profile",
+            "shortName": "BT\nNext"
+        },
+        {
+            "name": "BT Prev",
+            "title": "Switch to previous Bluetooth profile",
+            "shortName": "BT\nPrev"
+        },
+        {
+            "name": "BT Clear",
+            "title": "Clear current Bluetooth profile bond",
+            "shortName": "BT\nClr"
+        },
+        {
+            "name": "USB/BLE",
+            "title": "Switch default output between USB and BLE",
+            "shortName": "USB\nBLE"
+        }
+    ],
     "matrix": {
         "rows": 6,
         "cols": 6

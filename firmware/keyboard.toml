@@ -36,17 +36,17 @@ LShift  Z  X  C  V  B  N  M  Comma  Dot  MO(1)  MO(2)
 [[layer]]
 name = "lower"
 keys = """
-_  Kc1  Kc2  Kc3  Kc4  Kc5  Kc6   Kc7   Kc8  Kc9    Kc0     Minus
-_  _    _    _    _    _    Left  Down  Up   Right  Delete  _
-_  _    _    _    _    _    _     _     _    _      _       _
+Grave  Kc1    Kc2          Kc3           Kc4        Kc5    Kc6    Kc7   Kc8  Kc9    Kc0     Minus
+_      Equal  LeftBracket  RightBracket  Backslash  Quote  Left   Down  Up   Right  Delete  _
+_      _      _            _             _          _      Slash  International1  International3  _      _       _
 """
 
 [[layer]]
 name = "raise"
 keys = """
-_  _  _     _     _  _  _  _  _     _       _  _
-_  _  LAlt  LGui  _  _  _  _  RAlt  RShift  _  _
-_  _  _     _     _  _  _  _  _     _       _  _
+SHIFTED(Grave)  SHIFTED(Kc1)    SHIFTED(Kc2)          SHIFTED(Kc3)           SHIFTED(Kc4)        SHIFTED(Kc5)    SHIFTED(Kc6)    SHIFTED(Kc7)             SHIFTED(Kc8)             SHIFTED(Kc9)  SHIFTED(Kc0)  SHIFTED(Minus)
+SHIFTED(Equal)  SHIFTED(LeftBracket)  SHIFTED(RightBracket)  SHIFTED(Backslash)  SHIFTED(Quote)  SHIFTED(Slash)  SHIFTED(International1)  SHIFTED(International3)  User0  User1  User2  User3
+User6           Macro(1)        Macro(2)              Macro(3)               Macro(4)            Macro(5)        Macro(0)        Macro(6)                 User4                    User5         _             User7
 """
 
 [behavior.combo]
