@@ -33,7 +33,7 @@ wakizashi/
 
 ## ファームウェアの書き込み (概要)
 
-ブラウザから 1 クリックで書き込める [Web Flasher](https://aiirononeko.github.io/wakizashi/) を公開している。USB-C でつなげば、自動でブートローダに入り最新ファームを書き込む。詳細と代替手順は [docs/flashing.md](./docs/flashing.md) を参照。
+ブラウザから 1 クリックで書き込める [Web Flasher](https://e-sp9.github.io/wakizashi/) を公開している。USB-C でつなげば、自動でブートローダに入り最新ファームを書き込む。詳細と代替手順は [docs/flashing.md](./docs/flashing.md) を参照。
 
 ## キーマップ
 

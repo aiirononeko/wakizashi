@@ -6,7 +6,7 @@
 
 ブラウザだけで最新ファームを書き込める。Chrome / Edge / Opera の最新版に対応。
 
-👉 **[https://aiirononeko.github.io/wakizashi/](https://aiirononeko.github.io/wakizashi/)**
+👉 **[https://e-sp9.github.io/wakizashi/](https://e-sp9.github.io/wakizashi/)**
 
 1. 「最新ファームを取得」— GitHub Releases から最新 DFU パッケージを同一オリジンで読み込む
 2. 「キーボードを選択して再起動」— WebHID でキーボードを選ぶと、Vial の `BootloaderJump` コマンドで自動的にブートローダへ再起動
@@ -19,7 +19,7 @@
 Web Flasher が使えない環境でのフォールバック。
 
 1. キーボードのリセットボタンを素早く 2 回押してブートローダモードに入る (PC 上に `XIAO-SENSE` などの USB ドライブが出現)
-2. [Releases](https://github.com/aiirononeko/wakizashi/releases/latest) から `wakizashi.uf2` をダウンロード
+2. [Releases](https://github.com/e-sp9/wakizashi/releases/latest) から `wakizashi.uf2` をダウンロード
 3. ダウンロードした `.uf2` をドライブにコピー — 自動的に書き込まれて再起動する
 
 ## 3. ローカルビルドから書き込み
@@ -58,7 +58,7 @@ adafruit-nrfutil dfu serial --package wakizashi-dfu.zip -p /dev/ttyACM0 -b 11520
 | PC に USB デバイスとして見えない | ケーブルがデータ通信対応か確認 (充電専用ケーブルでは不可) |
 | ブートローダに入れない | XIAO 本体のリセットボタンを **素早く 2 回** 押す（revB は外付けリセットスイッチを撤廃、ケース開口から XIAO 内蔵ボタンを直接押す）。LED が流れるように点滅したらブートローダ |
 | Web Flasher の「シリアルポート選択」ダイアログに候補が出ない | キーボードがブートローダモードになっていない。手動で 2 回リセット |
-| 書き込み後にキーボードが動かない | 再びブートローダに入り、[過去のリリース](https://github.com/aiirononeko/wakizashi/releases) の `wakizashi.uf2` で復旧できる |
+| 書き込み後にキーボードが動かない | 再びブートローダに入り、[過去のリリース](https://github.com/e-sp9/wakizashi/releases) の `wakizashi.uf2` で復旧できる |
 | Web Flasher の書き込みが `START_DFU` で止まる | ブラウザをハードリロード → 別のケーブル / ポートで再試行 |
 
 詳細なログを追うときは、Web Flasher を開いて DevTools → Console を見る。`[dfu]` プレフィックスで TX/RX バイトが出力される。

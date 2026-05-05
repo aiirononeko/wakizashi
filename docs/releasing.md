@@ -21,7 +21,7 @@ UF2 / HEX / DFU zip をビルドして GitHub Release を作成
 
 ## 日常のリリース: 何もしない
 
-`firmware/` を変更した PR を `main` にマージするだけでよい。上記のフローがすべて走り、数分後には最新ビルドが [Web Flasher](https://aiirononeko.github.io/wakizashi/) と [Releases](https://github.com/aiirononeko/wakizashi/releases/latest) の両方で配布される。
+`firmware/` を変更した PR を `main` にマージするだけでよい。上記のフローがすべて走り、数分後には最新ビルドが [Web Flasher](https://e-sp9.github.io/wakizashi/) と [Releases](https://github.com/e-sp9/wakizashi/releases/latest) の両方で配布される。
 
 ## メジャー / マイナーを上げる: 手動
 
